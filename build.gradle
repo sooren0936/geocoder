@@ -6,7 +6,9 @@ plugins {
 
 group = 'com.demo'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+compileJava.options.encoding = 'UTF-8'
 
 repositories {
     mavenCentral()
@@ -17,7 +19,10 @@ test {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
     testImplementation('org.springframework.boot:spring-boot-starter-test')
+
+//    compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis', version: '2.2.7.RELEASE'
 }
 
