@@ -25,9 +25,10 @@ dependencies {
 
     implementation group: 'redis.clients', name: 'jedis', version: '3.3.0'
 
+    implementation group: 'com.mmnaseri.utils', name: 'spring-data-mock', version: '2.1.0'
+
+    compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '2.2.2.RELEASE'
 
     testImplementation('org.springframework.boot:spring-boot-starter-test')
-
-
 }
 
