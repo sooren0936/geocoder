@@ -1,3 +1,8 @@
 spring:
   application:
     name: geocoder
+  jackson:
+    serialization:
+      write_dates_as_timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false

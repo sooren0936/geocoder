@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class LocationDto {
+public class ReverseLocationDto {
 
     @JsonProperty("place_id")
     private Long placeId;
@@ -13,19 +13,21 @@ public class LocationDto {
 
     @JsonProperty("osm_id")
     private Long osmId;
-
-    @JsonProperty("boundingbox")
-    private List<Double> boundingBox;
     private Double lat;
     private Double lon;
 
     @JsonProperty("display_name")
     private String displayName;
+    private Address address;
 
-    @JsonProperty("class")
-    private String geoClass;
-    private String type;
-    private Double importance;
+    @JsonProperty("boundingbox")
+    private List<Double> boundingBox;
+
+    public ReverseLocationDto(Long placeId, Double lat, Double lon) {
+        this.placeId = placeId;
+        this.lat = lat;
+        this.lon = lon;
+    }
 
     public Long getPlaceId() {
         return placeId;
@@ -59,14 +61,6 @@ public class LocationDto {
         this.osmId = osmId;
     }
 
-    public List<Double> getBoundingBox() {
-        return boundingBox;
-    }
-
-    public void setBoundingBox(List<Double> boundingBox) {
-        this.boundingBox = boundingBox;
-    }
-
     public Double getLat() {
         return lat;
     }
@@ -91,27 +85,19 @@ public class LocationDto {
         this.displayName = displayName;
     }
 
-    public String getGeoClass() {
-        return geoClass;
+    public Address getAddress() {
+        return address;
     }
 
-    public void setGeoClass(String geoClass) {
-        this.geoClass = geoClass;
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
-    public String getType() {
-        return type;
+    public List<Double> getBoundingbox() {
+        return boundingBox;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public Double getImportance() {
-        return importance;
-    }
-
-    public void setImportance(Double importance) {
-        this.importance = importance;
+    public void setBoundingbox(List<Double> boundingbox) {
+        this.boundingBox = boundingbox;
     }
 }

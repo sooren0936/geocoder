@@ -1,18 +1,18 @@
 package com.demo.geocoder.controller;
 
-import com.demo.geocoder.model.GeoData;
+import com.demo.geocoder.client.FeignGeoClient;
 import com.demo.geocoder.model.LocationDto;
+import com.demo.geocoder.model.ReverseLocationDto;
+import com.demo.geocoder.model.GeoEntityCache;
+import com.demo.geocoder.model.ReverseGeoEntityCache;
+import com.demo.geocoder.repository.ReverseRedisRepository;
 import com.demo.geocoder.repository.RedisRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
@@ -21,68 +21,36 @@ import java.util.List;
 public class GeoController {
 
     RedisRepository redisRepository;
+    ReverseRedisRepository reverseRedisRepository;
+    FeignGeoClient feignGeoClient;
 
     @Autowired
-    public GeoController(RedisRepository redisRepository){
+    public GeoController(RedisRepository redisRepository, FeignGeoClient feignGeoClient, ReverseRedisRepository reverseRedisRepository) {
         this.redisRepository = redisRepository;
+        this.feignGeoClient = feignGeoClient;
+        this.reverseRedisRepository = reverseRedisRepository;
     }
 
     @GetMapping(value = "/decoder", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<LocationDto>> queryDecoder(@RequestParam(name = "query") final String query) {
-        final RestTemplate restTemplate = new RestTemplate();
-//        final var cachedGeoData = redisRepository.findById(query);
-//        if (cachedGeoData.isPresent()) {
-//            return ResponseEntity.ok(cachedGeoData.map(GeoData::getEntity).orElse(null));
-//        }
-        final ResponseEntity<List<LocationDto>> responseEntity = restTemplate.exchange(
-            "https://nominatim.openstreetmap.org/search/" + query + "?format=json",
-            HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<LocationDto>>() {} );
-//        redisRepository.save(new GeoData(query, responseEntity.getBody()));
+        final var cachedGeoDto = redisRepository.findById(query);
+        if (cachedGeoDto.isPresent()) {
+            return ResponseEntity.ok(cachedGeoDto.get().getLocationDto());
+        }
+        final ResponseEntity<List<LocationDto>> responseEntity = feignGeoClient.queryDecoder(query);
+        redisRepository.save(new GeoEntityCache(query, responseEntity.getBody()));
         return responseEntity;
     }
 
     @GetMapping(value = "/reversedecoder", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<LocationDto>> queryReverseDecoder(@RequestParam(name = "lat") final String latitude,
-                                                      @RequestParam(name = "lon") final String longitude) {
-        final RestTemplate restTemplate = new RestTemplate();
-//        final var cachedGeoData = redisRepository.findById(latitude + longitude);
-//        if (cachedGeoData.isPresent()) {
-//            return ResponseEntity.ok(cachedGeoData.map(GeoData::getEntity).orElse(null));
-//        }
-        final ResponseEntity<List<LocationDto>> responseEntity = restTemplate.exchange(
-            "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" + latitude + "&lon=" + longitude,
-            HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<LocationDto>>() {});
-//        redisRepository.save(new GeoData(latitude + longitude, responseEntity.getBody()));
+    public ResponseEntity<ReverseLocationDto> queryReverseDecoder(@RequestParam(name = "lat") final String latitude,
+                                                                  @RequestParam(name = "lon") final String longitude) {
+        final var cachedGeoDto = reverseRedisRepository.findById(latitude + longitude);
+        if (cachedGeoDto.isPresent()) {
+            return ResponseEntity.ok(cachedGeoDto.get().getReverseLocationDto());
+        }
+        final ResponseEntity<ReverseLocationDto> responseEntity = feignGeoClient.queryReverseDecoder(latitude, longitude);
+        reverseRedisRepository.save(new ReverseGeoEntityCache(latitude + longitude, responseEntity.getBody()));
         return responseEntity;
     }
 }
-
-//    @GetMapping(value = "/decoder", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public ResponseEntity<String> queryDecoder(@RequestParam(name = "query") final String query) {
-//        final RestTemplate restTemplate = new RestTemplate();
-//        final var cachedGeoData = redisRepository.findById(query);
-//        if (cachedGeoData.isPresent()) {
-//            return ResponseEntity.ok(cachedGeoData.map(GeoData::getEntity).orElse(null));
-//        }
-//        final ResponseEntity<String> responseEntity = restTemplate.exchange(
-//            "https://nominatim.openstreetmap.org/search/" + query + "?format=json",
-//            HttpMethod.GET, HttpEntity.EMPTY, String.class);
-//        redisRepository.save(new GeoData(query, responseEntity.getBody()));
-//        return responseEntity;
-//    }
-//
-//    @GetMapping(value = "/reversedecoder", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public ResponseEntity<String> queryReverseDecoder(@RequestParam(name = "lat") final String latitude,
-//                                                 @RequestParam(name = "lon") final String longitude) {
-//        final RestTemplate restTemplate = new RestTemplate();
-//        final var cachedGeoData = redisRepository.findById(latitude + longitude);
-//        if (cachedGeoData.isPresent()) {
-//            return ResponseEntity.ok(cachedGeoData.map(GeoData::getEntity).orElse(null));
-//        }
-//        final ResponseEntity<String> responseEntity = restTemplate.exchange(
-//            "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" + latitude + "&lon=" + longitude,
-//            HttpMethod.GET, HttpEntity.EMPTY, String.class);
-//        redisRepository.save(new GeoData(latitude + longitude, responseEntity.getBody()));
-//        return responseEntity;
-//    }
-//}

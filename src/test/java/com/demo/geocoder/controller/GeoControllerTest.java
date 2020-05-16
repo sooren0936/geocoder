@@ -1,5 +1,9 @@
 package com.demo.geocoder.controller;
 
+import com.demo.geocoder.client.FeignGeoClient;
+import com.demo.geocoder.model.GeoEntityCache;
+import com.demo.geocoder.model.LocationDto;
+import com.demo.geocoder.model.ReverseLocationDto;
 import com.demo.geocoder.repository.RedisRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -14,6 +18,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.xml.stream.Location;
+
+import java.util.List;
+
 import static org.assertj.core.api.BDDAssertions.then;
 
 @ActiveProfiles("test")
@@ -21,8 +29,14 @@ import static org.assertj.core.api.BDDAssertions.then;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class GeoControllerTest {
 
+    RedisRepository redisRepository;
+    FeignGeoClient feignGeoClient;
+
     @Autowired
-    private RedisRepository redisRepository;
+    public GeoControllerTest(RedisRepository redisRepository, FeignGeoClient feignGeoClient) {
+        this.redisRepository = redisRepository;
+        this.feignGeoClient = feignGeoClient;
+    }
 
     @LocalServerPort
     private int port;
@@ -32,12 +46,11 @@ class GeoControllerTest {
 
     @Test
     public void decoderShouldReturnDataIncludePlaceId() {
+        LocationDto locationDto = new LocationDto();
         final String query = "Vasya";
-        final ResponseEntity<String> entity = restTemplate.exchange(
-            "http://localhost:" + port + "/decoder?query=" + query,
-            HttpMethod.GET, HttpEntity.EMPTY, String.class);
+        final ResponseEntity<List<LocationDto>> entity =  feignGeoClient.queryDecoder(query);
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        then(entity.getBody()).contains("13909533");
+        then(entity.getBody()).contains();
     }
 
     @Test
@@ -52,24 +65,20 @@ class GeoControllerTest {
 
     @Test
     public void reverseDecoderShouldReturnDataIncludePlaceId() {
-        final String lat = "58.8140982";
-        final String lon = "125.5411205";
-        final ResponseEntity<String> entity = restTemplate.exchange(
-            "http://localhost:" + port + "/reversedecoder?lat=" + lat + "&lon=" + lon,
-            HttpMethod.GET, HttpEntity.EMPTY, String.class);
-        then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        then(entity.getBody()).contains("13909533");
+        ReverseLocationDto reverseLocationDto = new ReverseLocationDto(13909533L, 58.8140982, 125.5411205);
+        final String latitude = "58.8140982";
+        final String longitude = "125.5411205";
+        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.queryReverseDecoder(latitude,longitude);
+        then(entity.getBody()).isEqualToComparingFieldByField(reverseLocationDto);
     }
 
     @Test
     public void reverseDecoderShouldReturnErrorWhenInvalidCoordinates() {
-        final String lat = "10000";
-        final String lon = "10000";
-        final ResponseEntity<String> entity = restTemplate.exchange(
-            "http://localhost:" + port + "/reversedecoder?lat=" + lat + "&lon=" + lon,
-            HttpMethod.GET, HttpEntity.EMPTY, String.class);
+        final String latitude = "10000";
+        final String longitude = "10000";
+        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.queryReverseDecoder(latitude,longitude);
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        then(entity.getBody()).contains("Unable to geocode");
+//        then(entity.getBody()).contains("Unable to geocode");
     }
 
     @Test
