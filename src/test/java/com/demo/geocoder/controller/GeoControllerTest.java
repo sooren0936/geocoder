@@ -3,7 +3,9 @@ package com.demo.geocoder.controller;
 import com.demo.geocoder.TestApplication;
 import com.demo.geocoder.client.FeignGeoClient;
 import com.demo.geocoder.dto.LocationDto;
+import com.demo.geocoder.dto.ReverseLocationDto;
 import com.demo.geocoder.repository.RedisRepository;
+import org.assertj.core.api.AbstractAtomicReferenceAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -74,9 +77,41 @@ class GeoControllerTest {
         return ResponseEntity.ok(list);
     }
 
+    private static ResponseEntity<ReverseLocationDto> buildTestReverseLocationDto() {
+        final ReverseLocationDto reverseLocationDto = new ReverseLocationDto();
+        final ReverseLocationDto.Address address = new ReverseLocationDto.Address();
+        address.setVillage("setVillage");
+        address.setCounty("setCounty");
+        address.setState("setState");
+        address.setCountry("setCountry");
+        address.setCountryCode("1");
+
+        final List <Double> boundingBox = new ArrayList<>();
+        boundingBox.add(55.6935861);
+        boundingBox.add(55.7571071);
+        boundingBox.add(37.5063561);
+        boundingBox.add(37.613069);
+
+        reverseLocationDto.setPlaceId(235803L);
+        reverseLocationDto.setLicence("Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright");
+        reverseLocationDto.setOsm_type("relation");
+        reverseLocationDto.setOsmId(2800169L);
+
+        reverseLocationDto.setLat(55.70229715);
+        reverseLocationDto.setLon(37.531797769429105);
+        reverseLocationDto.setDisplayName("Московский государственный университет им. М. В. Ломоносова, проезд Апакова, " +
+            "Бабий городок, район Якиманка, Центральный административный округ, " +
+            "Москва, Центральный федеральный округ, 119049, Россия");
+        reverseLocationDto.setAddress(address);
+        reverseLocationDto.setBoundingBox(boundingBox);
+
+        return ResponseEntity.ok(reverseLocationDto);
+    }
+
     @BeforeEach
     public void setUp(){
         when(feignGeoClient.feignQueryDecoder(anyString())).thenReturn(buildTestLocationDto());
+        when(feignGeoClient.queryReverseDecoder(anyDouble(), anyDouble())).thenReturn(buildTestReverseLocationDto());
     }
 
     @Test
@@ -92,40 +127,34 @@ class GeoControllerTest {
 
     @Test
     public void decoderShouldReturnSquareBracketsWhenInvalidOrEmptyQuery() {
+        when(feignGeoClient.feignQueryDecoder(anyString())).thenReturn(ResponseEntity.ok(new ArrayList<>()));
         final String query = "%%%%%";
         final ResponseEntity<List<LocationDto>> entity = restTemplate.exchange(
             "http://localhost:" + port + "/decoder?query=" + query,
             HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<LocationDto>>() {});
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        then(entity.getBody()).isEqualTo("[]");
+        then(entity.getBody().size()).isEqualTo(0);
     }
 
     @Test
     public void reverseDecoderShouldReturnDataIncludePlaceId() {
-//        ReverseLocationDto reverseLocationDto = new ReverseLocationDto(13909533L, 58.8140982, 125.5411205);
-//        final String latitude = "58.8140982";
-//        final String longitude = "125.5411205";
-//        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.queryReverseDecoder(latitude,longitude);
-//        then(entity.getBody()).isEqualToComparingFieldByField(reverseLocationDto);
-    }
-
-    @Test
-    public void reverseDecoderShouldReturnErrorWhenInvalidCoordinates() {
-//        final String latitude = "10000";
-//        final String longitude = "10000";
-//        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.queryReverseDecoder(latitude,longitude);
-//        then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-//        then(entity.getBody()).contains("Unable to geocode");
+        final String latitude = "58.8140982";
+        final String longitude = "125.5411205";
+        final ResponseEntity<ReverseLocationDto> entity = restTemplate.exchange(
+            "http://localhost:" + port + "/reversedecoder?lat=" + latitude + "&lon=" + longitude,
+            HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<ReverseLocationDto>() {});
+        then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        then(entity.getBody().getPlaceId()).isEqualTo(buildTestReverseLocationDto().getBody().getPlaceId());
     }
 
     @Test
     public void reverseDecoderShouldReturnInternalServerErrorWhenEmptyCoordinates() {
-        final String lat = "";
-        final String lon = "50";
-        final ResponseEntity<String> entity = restTemplate.exchange(
-            "http://localhost:" + port + "/reversedecoder?lat=" + lat + "&lon=" + lon,
-            HttpMethod.GET, HttpEntity.EMPTY, String.class);
+        final String latitude = "";
+        final String longitude = "50";
+        final ResponseEntity<ReverseLocationDto> entity = restTemplate.exchange(
+            "http://localhost:" + port + "/reversedecoder?lat=" + latitude + "&lon=" + longitude,
+            HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<ReverseLocationDto>() {});
         then(entity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        then(entity.getBody()).contains("400 Bad Request");
+//        then(entity.getBody()).isNull();
     }
 }

@@ -3,6 +3,7 @@ package com.demo.geocoder.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ReverseLocationDto {
 
@@ -32,18 +33,6 @@ public class ReverseLocationDto {
 
     @JsonProperty("boundingbox")
     private List<Double> boundingBox;
-
-    public ReverseLocationDto(Long placeId, String licence, String osmType, Long osmId, Double lat, Double lon, String displayName, Address address, List<Double> boundingBox) {
-        this.placeId = placeId;
-        this.licence = licence;
-        this.osmType = osmType;
-        this.osmId = osmId;
-        this.lat = lat;
-        this.lon = lon;
-        this.displayName = displayName;
-        this.address = address;
-        this.boundingBox = boundingBox;
-    }
 
     public Long getPlaceId() {
         return placeId;
@@ -117,6 +106,22 @@ public class ReverseLocationDto {
         this.boundingBox = boundingBox;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReverseLocationDto that = (ReverseLocationDto) o;
+        return Objects.equals(placeId, that.placeId) &&
+            Objects.equals(licence, that.licence) &&
+            Objects.equals(osmType, that.osmType) &&
+            Objects.equals(osmId, that.osmId) &&
+            Objects.equals(lat, that.lat) &&
+            Objects.equals(lon, that.lon) &&
+            Objects.equals(displayName, that.displayName) &&
+            Objects.equals(address, that.address) &&
+            Objects.equals(boundingBox, that.boundingBox);
+    }
+
     public static class Address {
 
         @JsonProperty("village")
@@ -166,12 +171,24 @@ public class ReverseLocationDto {
             this.country = country;
         }
 
-        public String getCountry_code() {
+        public String getCountryCode() {
             return countryCode;
         }
 
-        public void setCountry_code(String country_code) {
-            this.countryCode = country_code;
+        public void setCountryCode(String countryCode) {
+            this.countryCode = countryCode;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Address address = (Address) o;
+            return Objects.equals(village, address.village) &&
+                Objects.equals(county, address.county) &&
+                Objects.equals(state, address.state) &&
+                Objects.equals(country, address.country) &&
+                Objects.equals(countryCode, address.countryCode);
         }
     }
 }
