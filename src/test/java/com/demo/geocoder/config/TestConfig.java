@@ -21,6 +21,4 @@ public class TestConfig {
     public ReverseRedisRepository reverseRedisRepository() {
         return RepositoryFactoryBuilder.builder().mock(ReverseRedisRepository.class);
     }
-
-
 }

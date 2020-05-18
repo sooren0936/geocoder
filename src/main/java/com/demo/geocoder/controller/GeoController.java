@@ -5,8 +5,8 @@ import com.demo.geocoder.dto.LocationDto;
 import com.demo.geocoder.dto.ReverseLocationDto;
 import com.demo.geocoder.model.GeoEntityCache;
 import com.demo.geocoder.model.ReverseGeoEntityCache;
-import com.demo.geocoder.repository.ReverseRedisRepository;
 import com.demo.geocoder.repository.RedisRepository;
+import com.demo.geocoder.repository.ReverseRedisRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -55,7 +55,7 @@ public class GeoController {
         if (cachedGeoDto.isPresent()) {
             return ResponseEntity.ok(cachedGeoDto.get().getReverseLocationDto());
         }
-        final ResponseEntity<ReverseLocationDto> responseEntity = feignGeoClient.queryReverseDecoder(latitude, longitude);
+        final ResponseEntity<ReverseLocationDto> responseEntity = feignGeoClient.feignQueryReverseDecoder(latitude, longitude);
         reverseRedisRepository.save(new ReverseGeoEntityCache(latitude + "," + longitude, responseEntity.getBody()));
         return responseEntity;
     }

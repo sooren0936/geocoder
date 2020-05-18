@@ -1,15 +1,15 @@
 package com.demo.geocoder.client;
 
+import com.demo.geocoder.TestApplication;
 import com.demo.geocoder.dto.LocationDto;
 import com.demo.geocoder.dto.ReverseLocationDto;
-import com.demo.geocoder.repository.RedisRepository;
-import com.demo.geocoder.repository.ReverseRedisRepository;
+import feign.FeignException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
@@ -19,53 +19,61 @@ import java.util.List;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
-
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = TestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@EnableFeignClients
 class FeignGeoClientTest {
 
-    RedisRepository redisRepository;
-    ReverseRedisRepository reverseRedisRepository;
-    FeignGeoClient feignGeoClient;
-
     @Autowired
-    public FeignGeoClientTest(RedisRepository redisRepository, ReverseRedisRepository reverseRedisRepository, FeignGeoClient feignGeoClient) {
-        this.redisRepository = redisRepository;
-        this.reverseRedisRepository = reverseRedisRepository;
-        this.feignGeoClient = feignGeoClient;
-    }
-
-    @LocalServerPort
-    private int port;
-
-    @Autowired
-    private TestRestTemplate restTemplate;
+    private FeignGeoClient feignGeoClient;
 
     @Test
-    public void decoderShouldReturnDataIncludePlaceId() {
-        LocationDto locationDto = new LocationDto();
-        final String query = "Vasya";
+    public void feignQueryDecoderShouldReturnDataIncludeDisplayName() {
+        final String query = "Moscow State University";
         final ResponseEntity<List<LocationDto>> entity = feignGeoClient.feignQueryDecoder(query);
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        then(entity.getBody()).contains();
+        then(entity.getBody().size()).isEqualTo(4);
+        then(entity.getBody().get(0).getDisplayName()).contains("Московский государственный университет");
+        then(entity.getBody().get(0).getLat()).isEqualTo(55.70229715);
+        then(entity.getBody().get(0).getLon()).isEqualTo(37.531797769429105);
     }
 
     @Test
-    public void reverseDecoderShouldReturnDataIncludePlaceId() {
-//        ReverseLocationDto reverseLocationDto = new ReverseLocationDto(13909533L, 58.8140982, 125.5411205);
-        final Double latitude = 58.8140982;
-        final Double longitude = 125.5411205;
-        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.queryReverseDecoder(latitude,longitude);
-//        then(entity.getBody()).isEqualToComparingFieldByField(reverseLocationDto);
-    }
-
-    @Test
-    public void reverseDecoderShouldReturnErrorWhenInvalidCoordinates() {
-        final Double latitude =  10000.0;
-        final Double longitude = 10000.0;
-        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.queryReverseDecoder(latitude,longitude);
+    public void feignQueryDecoderShouldReturnEmptyAnswerWhenInvalidOrEmptyQuery() {
+        final String query = "%%%%%";
+        final ResponseEntity<List<LocationDto>> entity = feignGeoClient.feignQueryDecoder(query);
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-//        then(entity.getBody()).contains("Unable to geocode");
+        then(entity.getBody().size()).isEqualTo(0);
+    }
+
+    @Test
+    public void reverseFeignGeoClientDecoderShouldReturnDataIncludePlaceId() {
+        final Double latitude = 55.70229715;
+        final Double longitude = 37.531797769429105;
+        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.feignQueryReverseDecoder(latitude, longitude);
+        then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        then(entity.getBody().getDisplayName()).contains("Московский государственный университет");
+        then(entity.getBody().getPlaceId()).isEqualTo(235803036L);
+        then(entity.getBody().getOsmId()).isEqualTo(2800169L);
+    }
+
+    @Test
+    public void reverseFeignGeoClientDecoderShouldReturnNullBodyIncludePlaceId() {
+        final Double latitude = 1000.0;
+        final Double longitude = 37.531797769429105;
+        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.feignQueryReverseDecoder(latitude, longitude);
+        then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        then(entity.getBody().getPlaceId()).isNull();
+    }
+
+    @Test
+    public void reverseFeignGeoClientDecoderShouldReturnInternalServerErrorWhenEmptyCoordinates() {
+        final Double latitude = null;
+        final Double longitude = 37.531797769429105;
+        final ResponseEntity<ReverseLocationDto> entity;
+        Assertions.assertThrows(FeignException.class, () -> {
+            feignGeoClient.feignQueryReverseDecoder(latitude, longitude);
+        });
     }
 }

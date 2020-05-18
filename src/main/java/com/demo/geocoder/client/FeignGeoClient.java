@@ -3,7 +3,6 @@ package com.demo.geocoder.client;
 import com.demo.geocoder.dto.LocationDto;
 import com.demo.geocoder.dto.ReverseLocationDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +17,6 @@ public interface FeignGeoClient {
     ResponseEntity<List<LocationDto>> feignQueryDecoder(@PathVariable(name = "query") final String query);
 
     @GetMapping(value = "/reverse?format=json&lat={lat}&lon={lon}", produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<ReverseLocationDto> queryReverseDecoder(@PathVariable(name = "lat") final Double latitude,
-                                                           @PathVariable(name = "lon") final Double longitude);
+    ResponseEntity<ReverseLocationDto> feignQueryReverseDecoder(@PathVariable(name = "lat") final Double latitude,
+                                                                @PathVariable(name = "lon") final Double longitude);
 }
-

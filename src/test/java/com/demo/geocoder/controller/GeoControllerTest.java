@@ -4,8 +4,6 @@ import com.demo.geocoder.TestApplication;
 import com.demo.geocoder.client.FeignGeoClient;
 import com.demo.geocoder.dto.LocationDto;
 import com.demo.geocoder.dto.ReverseLocationDto;
-import com.demo.geocoder.repository.RedisRepository;
-import org.assertj.core.api.AbstractAtomicReferenceAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -37,10 +35,7 @@ import static org.mockito.Mockito.when;
 class GeoControllerTest {
 
     @Autowired
-    RedisRepository redisRepository;
-
-    @Autowired
-    TestRestTemplate restTemplate;
+    private TestRestTemplate restTemplate;
 
     @MockBean
     protected FeignGeoClient feignGeoClient;
@@ -96,7 +91,6 @@ class GeoControllerTest {
         reverseLocationDto.setLicence("Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright");
         reverseLocationDto.setOsm_type("relation");
         reverseLocationDto.setOsmId(2800169L);
-
         reverseLocationDto.setLat(55.70229715);
         reverseLocationDto.setLon(37.531797769429105);
         reverseLocationDto.setDisplayName("Московский государственный университет им. М. В. Ломоносова, проезд Апакова, " +
@@ -111,11 +105,11 @@ class GeoControllerTest {
     @BeforeEach
     public void setUp(){
         when(feignGeoClient.feignQueryDecoder(anyString())).thenReturn(buildTestLocationDto());
-        when(feignGeoClient.queryReverseDecoder(anyDouble(), anyDouble())).thenReturn(buildTestReverseLocationDto());
+        when(feignGeoClient.feignQueryReverseDecoder(anyDouble(), anyDouble())).thenReturn(buildTestReverseLocationDto());
     }
 
     @Test
-    public void decoderShouldReturnDataIncludePlaceId() {
+    public void decoderShouldReturnData() {
         final String query = "Moscow State University";
         final ResponseEntity<List<LocationDto>> entity = restTemplate.exchange(
             "http://localhost:" + port + "/decoder?query=" + query,
@@ -126,7 +120,7 @@ class GeoControllerTest {
     }
 
     @Test
-    public void decoderShouldReturnSquareBracketsWhenInvalidOrEmptyQuery() {
+    public void decoderShouldReturnEmptyAnswerWhenInvalidOrEmptyQuery() {
         when(feignGeoClient.feignQueryDecoder(anyString())).thenReturn(ResponseEntity.ok(new ArrayList<>()));
         final String query = "%%%%%";
         final ResponseEntity<List<LocationDto>> entity = restTemplate.exchange(
@@ -155,6 +149,5 @@ class GeoControllerTest {
             "http://localhost:" + port + "/reversedecoder?lat=" + latitude + "&lon=" + longitude,
             HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<ReverseLocationDto>() {});
         then(entity.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-//        then(entity.getBody()).isNull();
     }
 }
