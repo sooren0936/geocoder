@@ -1,5 +1,6 @@
 package com.demo.geocoder.model;
 
+import com.demo.geocoder.dto.LocationDto;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 

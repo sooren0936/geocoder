@@ -1,4 +1,4 @@
-package com.demo.geocoder.model;
+package com.demo.geocoder.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -8,15 +8,23 @@ public class LocationDto {
 
     @JsonProperty("place_id")
     private Long placeId;
+
+    @JsonProperty("licence")
     private String licence;
-    private String osm_type;
+
+    @JsonProperty("osm_type")
+    private String osmType;
 
     @JsonProperty("osm_id")
     private Long osmId;
 
     @JsonProperty("boundingbox")
     private List<Double> boundingBox;
+
+    @JsonProperty("lat")
     private Double lat;
+
+    @JsonProperty("lon")
     private Double lon;
 
     @JsonProperty("display_name")
@@ -24,7 +32,11 @@ public class LocationDto {
 
     @JsonProperty("class")
     private String geoClass;
+
+    @JsonProperty("type")
     private String type;
+
+    @JsonProperty("importance")
     private Double importance;
 
     public Long getPlaceId() {
@@ -44,11 +56,11 @@ public class LocationDto {
     }
 
     public String getOsm_type() {
-        return osm_type;
+        return osmType;
     }
 
     public void setOsm_type(String osm_type) {
-        this.osm_type = osm_type;
+        this.osmType = osm_type;
     }
 
     public Long getOsmId() {
