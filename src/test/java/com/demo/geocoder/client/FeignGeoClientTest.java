@@ -56,7 +56,7 @@ class FeignGeoClientTest {
 //        ReverseLocationDto reverseLocationDto = new ReverseLocationDto(13909533L, 58.8140982, 125.5411205);
         final Double latitude = 58.8140982;
         final Double longitude = 125.5411205;
-        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.feignQueryReverseDecoder(latitude,longitude);
+        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.queryReverseDecoder(latitude,longitude);
 //        then(entity.getBody()).isEqualToComparingFieldByField(reverseLocationDto);
     }
 
@@ -64,7 +64,7 @@ class FeignGeoClientTest {
     public void reverseDecoderShouldReturnErrorWhenInvalidCoordinates() {
         final Double latitude =  10000.0;
         final Double longitude = 10000.0;
-        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.feignQueryReverseDecoder(latitude,longitude);
+        final ResponseEntity<ReverseLocationDto> entity = feignGeoClient.queryReverseDecoder(latitude,longitude);
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
 //        then(entity.getBody()).contains("Unable to geocode");
     }

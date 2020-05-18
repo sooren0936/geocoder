@@ -3,6 +3,7 @@ package com.demo.geocoder.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 public class LocationDto {
 
@@ -125,5 +126,23 @@ public class LocationDto {
 
     public void setImportance(Double importance) {
         this.importance = importance;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LocationDto that = (LocationDto) o;
+        return Objects.equals(placeId, that.placeId) &&
+            Objects.equals(licence, that.licence) &&
+            Objects.equals(osmType, that.osmType) &&
+            Objects.equals(osmId, that.osmId) &&
+            Objects.equals(boundingBox, that.boundingBox) &&
+            Objects.equals(lat, that.lat) &&
+            Objects.equals(lon, that.lon) &&
+            Objects.equals(displayName, that.displayName) &&
+            Objects.equals(geoClass, that.geoClass) &&
+            Objects.equals(type, that.type) &&
+            Objects.equals(importance, that.importance);
     }
 }

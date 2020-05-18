@@ -1,9 +1,10 @@
 package com.demo.geocoder.controller;
 
+import com.demo.geocoder.TestApplication;
 import com.demo.geocoder.client.FeignGeoClient;
 import com.demo.geocoder.dto.LocationDto;
 import com.demo.geocoder.repository.RedisRepository;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +24,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = TestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class GeoControllerTest {
 
     @Autowired
@@ -74,7 +74,7 @@ class GeoControllerTest {
         return ResponseEntity.ok(list);
     }
 
-    @Before
+    @BeforeEach
     public void setUp(){
         when(feignGeoClient.feignQueryDecoder(anyString())).thenReturn(buildTestLocationDto());
     }
@@ -86,16 +86,16 @@ class GeoControllerTest {
             "http://localhost:" + port + "/decoder?query=" + query,
             HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<LocationDto>>() {});
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertEquals("235803036", entity.getBody());
-        then(entity.getBody()).isEqualTo("amenity");
+        then(entity.getBody().size()).isEqualTo(1);
+        then(entity.getBody().get(0)).isEqualTo(buildTestLocationDto().getBody().get(0));
     }
 
     @Test
     public void decoderShouldReturnSquareBracketsWhenInvalidOrEmptyQuery() {
         final String query = "%%%%%";
-        final ResponseEntity<String> entity = restTemplate.exchange(
+        final ResponseEntity<List<LocationDto>> entity = restTemplate.exchange(
             "http://localhost:" + port + "/decoder?query=" + query,
-            HttpMethod.GET, HttpEntity.EMPTY, String.class);
+            HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<LocationDto>>() {});
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);
         then(entity.getBody()).isEqualTo("[]");
     }

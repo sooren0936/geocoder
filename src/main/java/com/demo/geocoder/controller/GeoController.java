@@ -55,7 +55,7 @@ public class GeoController {
         if (cachedGeoDto.isPresent()) {
             return ResponseEntity.ok(cachedGeoDto.get().getReverseLocationDto());
         }
-        final ResponseEntity<ReverseLocationDto> responseEntity = feignGeoClient.feignQueryReverseDecoder(latitude, longitude);
+        final ResponseEntity<ReverseLocationDto> responseEntity = feignGeoClient.queryReverseDecoder(latitude, longitude);
         reverseRedisRepository.save(new ReverseGeoEntityCache(latitude + "," + longitude, responseEntity.getBody()));
         return responseEntity;
     }
